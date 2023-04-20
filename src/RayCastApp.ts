@@ -17,6 +17,9 @@ export class RayCastApp extends gfx.GfxApp
     private boundsMesh: gfx.MeshInstance;
     private boundsMaterial: gfx.BoundingVolumeMaterial;
 
+    private pickRayLine: gfx.Mesh;
+    private pickRayMarker: gfx.Mesh;
+
     private boundingVolumeMode: string;
     private raycastMode: string;
 
@@ -30,6 +33,9 @@ export class RayCastApp extends gfx.GfxApp
 
         this.boundsMesh = new gfx.MeshInstance(this.pickMesh);
         this.boundsMaterial = new gfx.BoundingVolumeMaterial();
+
+        this.pickRayLine = gfx.MeshFactory.createBox(0.005, 0.005, 1);
+        this.pickRayMarker = gfx.MeshFactory.createSphere(0.04, 2);
 
         this.boundingVolumeMode = 'None';
         this.raycastMode = 'Box';
@@ -74,12 +80,22 @@ export class RayCastApp extends gfx.GfxApp
         this.scene.add(ground);
 
         this.pickMesh.position.set(0, 1.5, 0);
-        this.pickMesh.material.setColor(new gfx.Color(1, 0, 0));
+        this.pickMesh.material.setColor(new gfx.Color(0, 0.5, 1));
         this.scene.add(this.pickMesh);
 
         this.boundsMesh.material = this.boundsMaterial;
         this.boundsMesh.visible = false;
         this.scene.add(this.boundsMesh);
+
+        this.pickRayLine.material = new gfx.UnlitMaterial();
+        this.pickRayLine.material.setColor(new gfx.Color(1, 0, 1));
+        this.pickRayLine.visible = false;
+        this.scene.add(this.pickRayLine);
+
+        this.pickRayMarker.material = new gfx.PhongMaterial();
+        this.pickRayMarker.material.setColor(new gfx.Color(1, 0, 0));
+        this.pickRayMarker.visible = false;
+        this.scene.add(this.pickRayMarker);
 
         this.createGUI();
     }
@@ -133,6 +149,32 @@ export class RayCastApp extends gfx.GfxApp
         if(event.button != 0)
             return;
 
+        const deviceCoords = this.getNormalizedDeviceCoordinates(event.x, event.y);
         
+        const ray = new gfx.Ray();
+        ray.setPickRay(deviceCoords, this.camera);
+
+        let intersection: gfx.Vector3 | null = null;
+
+        intersection = ray.intersectsOrientedBoundingBox(this.pickMesh);
+
+        if(intersection)
+        {
+            this.pickRayLine.visible = true;
+            this.pickRayLine.position.copy(this.camera.position);
+            this.pickRayLine.position.y -= 0.05;
+            this.pickRayLine.lookAt(intersection);
+
+            const distance = this.pickRayLine.position.distanceTo(intersection);
+            this.pickRayLine.translateZ(-distance/2);
+            this.pickRayLine.scale.z = distance;
+
+            this.pickRayMarker.visible = true;
+            this.pickRayMarker.position.copy(intersection);
+        }
+        else
+        {
+            this.pickRayLine.visible = false;
+        }
     }
 }
