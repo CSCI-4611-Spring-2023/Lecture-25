@@ -156,7 +156,12 @@ export class RayCastApp extends gfx.GfxApp
 
         let intersection: gfx.Vector3 | null = null;
 
-        intersection = ray.intersectsOrientedBoundingBox(this.pickMesh);
+        if(this.raycastMode == 'Box')
+            intersection = ray.intersectsOrientedBoundingBox(this.pickMesh);
+        else if(this.raycastMode == 'Sphere')
+            intersection = ray.intersectsOrientedBoundingSphere(this.pickMesh);
+        else
+            intersection = ray.intersectsMesh(this.pickMesh);
 
         if(intersection)
         {
@@ -175,6 +180,7 @@ export class RayCastApp extends gfx.GfxApp
         else
         {
             this.pickRayLine.visible = false;
+            this.pickRayMarker.visible = false;
         }
     }
 }
