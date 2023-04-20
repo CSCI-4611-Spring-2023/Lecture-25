@@ -154,8 +154,8 @@ export class RayCastApp extends gfx.GfxApp
         const ray = new gfx.Ray();
         ray.setPickRay(deviceCoords, this.camera);
 
-        let intersection: gfx.Vector3 | null = null;
 
+        let intersection: gfx.Vector3 | null = null;
         if(this.raycastMode == 'Box')
             intersection = ray.intersectsOrientedBoundingBox(this.pickMesh);
         else if(this.raycastMode == 'Sphere')
@@ -176,11 +176,28 @@ export class RayCastApp extends gfx.GfxApp
 
             this.pickRayMarker.visible = true;
             this.pickRayMarker.position.copy(intersection);
+            return;
         }
-        else
+
+        const groundPlane = new gfx.Plane(gfx.Vector3.ZERO, gfx.Vector3.UP);
+        const groundIntersection = ray.intersectsPlane(groundPlane);
+        if(groundIntersection)
         {
-            this.pickRayLine.visible = false;
-            this.pickRayMarker.visible = false;
+            this.pickRayLine.visible = true;
+            this.pickRayLine.position.copy(this.camera.position);
+            this.pickRayLine.position.y -= 0.05;
+            this.pickRayLine.lookAt(groundIntersection);
+
+            const distance = this.pickRayLine.position.distanceTo(groundIntersection);
+            this.pickRayLine.translateZ(-distance/2);
+            this.pickRayLine.scale.z = distance;
+
+            this.pickRayMarker.visible = true;
+            this.pickRayMarker.position.copy(groundIntersection);
+            return;
         }
+        
+        this.pickRayLine.visible = false;
+        this.pickRayMarker.visible = false;
     }
 }
